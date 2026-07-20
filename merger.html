@@ -56,14 +56,29 @@
 <body>
 
 <h1>Text File Merger</h1>
-<p>Pick two .txt files. The output starts at the beginning of File 1 and ends at the end of File 2.</p>
+<p>Pick up to 7 .txt files. The output starts at the beginning of File 1 and ends at the end of the last file you filled in, in order. Empty slots are skipped. Nothing is truncated.</p>
 
 <div class="card">
-  <label for="file1">File 1 (start)</label>
+  <label for="file1">File 1</label>
   <input type="file" id="file1" accept=".txt,text/plain">
 
-  <label for="file2">File 2 (end)</label>
+  <label for="file2">File 2</label>
   <input type="file" id="file2" accept=".txt,text/plain">
+
+  <label for="file3">File 3</label>
+  <input type="file" id="file3" accept=".txt,text/plain">
+
+  <label for="file4">File 4</label>
+  <input type="file" id="file4" accept=".txt,text/plain">
+
+  <label for="file5">File 5</label>
+  <input type="file" id="file5" accept=".txt,text/plain">
+
+  <label for="file6">File 6</label>
+  <input type="file" id="file6" accept=".txt,text/plain">
+
+  <label for="file7">File 7</label>
+  <input type="file" id="file7" accept=".txt,text/plain">
 
   <button id="mergeBtn">Merge Files</button>
   <div id="status"></div>
@@ -71,8 +86,7 @@
 </div>
 
 <script>
-const file1Input = document.getElementById('file1');
-const file2Input = document.getElementById('file2');
+const fileInputs = [1,2,3,4,5,6,7].map(n => document.getElementById('file' + n));
 const mergeBtn = document.getElementById('mergeBtn');
 const status = document.getElementById('status');
 const downloadLink = document.getElementById('downloadLink');
@@ -87,26 +101,29 @@ function readFileAsText(file) {
 }
 
 mergeBtn.addEventListener('click', async () => {
-  const f1 = file1Input.files[0];
-  const f2 = file2Input.files[0];
+  const files = fileInputs
+    .map(input => input.files[0])
+    .filter(f => f);
 
-  if (!f1 || !f2) {
-    status.textContent = 'Please select both files.';
+  if (files.length < 2) {
+    status.textContent = 'Please select at least two files.';
     return;
   }
 
   mergeBtn.disabled = true;
-  status.textContent = 'Merging...';
+  status.textContent = 'Merging ' + files.length + ' file(s)...';
   downloadLink.style.display = 'none';
 
   try {
-    const [text1, text2] = await Promise.all([readFileAsText(f1), readFileAsText(f2)]);
+    const texts = await Promise.all(files.map(readFileAsText));
 
-    let merged = text1;
-    if (merged.length > 0 && !merged.endsWith('\n')) {
-      merged += '\n';
+    let merged = '';
+    for (const text of texts) {
+      merged += text;
+      if (merged.length > 0 && !merged.endsWith('\n')) {
+        merged += '\n';
+      }
     }
-    merged += text2;
 
     const blob = new Blob([merged], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
